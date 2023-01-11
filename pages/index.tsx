@@ -1,13 +1,10 @@
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
-import { ComponentPropsWithoutRef, FormEvent, ReactNode, useState } from 'react'
-import { CheckIcon } from '@heroicons/react/solid'
-import { createContext } from 'react'
-import { useContext } from 'react'
-import Spinner from '../components/Spinner'
 import delay from '../lib/delay'
 import useMeasure from 'react-use-measure'
+import { Form } from '../components/Form'
+import { useState } from 'react'
 
-const transition = { type: 'ease', ease: 'easeInOut', duration: 0.4 }
+export const transition = { type: 'ease', ease: 'easeInOut', duration: 0.4 }
 
 export default function ResizablePanel() {
   const [status, setStatus] = useState('idle')
@@ -74,91 +71,6 @@ export default function ResizablePanel() {
           </p>
         </div>
       </div>
-    </MotionConfig>
-  )
-}
-
-const formContext = createContext({ status: 'idle' })
-
-function Form({
-  onSubmit,
-  afterSave,
-  children,
-  className,
-  ...props
-}: {
-  onSubmit: () => Promise<void>
-  afterSave: () => void
-  children: ReactNode | ReactNode[]
-  className: string
-  props?: ComponentPropsWithoutRef<'form'>
-}) {
-  const [status, setStatus] = useState('idle')
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-
-    setStatus('saving')
-    await onSubmit()
-    setStatus('success')
-    await delay(1250)
-    afterSave()
-  }
-
-  return (
-    <formContext.Provider value={{ status }}>
-      <form
-        onSubmit={handleSubmit}
-        className={className}
-        {...props}
-      >
-        <fieldset disabled={status !== 'idle'}>{children}</fieldset>
-      </form>
-    </formContext.Provider>
-  )
-}
-
-Form.Button = function FormButton({ children, className, ...rest }: { children: ReactNode; className: string }) {
-  let { status } = useContext(formContext)
-
-  let disabled = status !== 'idle'
-
-  return (
-    <MotionConfig transition={{ ...transition, duration: 0.15 }}>
-      <button
-        type="submit"
-        disabled={disabled}
-        className={`${className} relative transition duration-200 ${
-          disabled ? 'bg-opacity-80' : 'hover:bg-opacity-80'
-        }`}
-        {...rest}
-      >
-        <AnimatePresence mode="wait">
-          {status === 'saving' && (
-            <motion.div
-              key="a"
-              initial={false}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 flex justify-center py-2"
-            >
-              <Spinner />
-            </motion.div>
-          )}
-
-          {status === 'success' && (
-            <motion.div
-              key="b"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="absolute inset-0 flex justify-center py-2"
-            >
-              <CheckIcon className="h-full" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <span className={status === 'idle' ? '' : 'invisible'}>{children}</span>
-      </button>
     </MotionConfig>
   )
 }
