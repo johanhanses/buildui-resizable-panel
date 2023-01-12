@@ -1,74 +1,100 @@
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/outline'
+import {
+  addMonths,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameMonth,
+  parse,
+  startOfMonth,
+  startOfWeek,
+  subMonths
+} from 'date-fns'
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
-import delay from '../lib/delay'
-import useMeasure from 'react-use-measure'
-import { Form } from '../components/Form'
 import { useState } from 'react'
 
-export const transition = { type: 'ease', ease: 'easeInOut', duration: 0.4 }
+export default function Page() {
+  const [monthString, setMonthString] = useState(format(new Date(), 'yyyy-MM'))
+  const month = parse(monthString, 'yyyy-MM', new Date())
 
-export default function ResizablePanel() {
-  const [status, setStatus] = useState('idle')
-  const [ref, bounds] = useMeasure()
+  function nextMonth() {
+    const next = addMonths(month, 1)
+    setMonthString(format(next, 'yyyy-MM'))
+  }
+
+  function previousMonth() {
+    const previous = subMonths(month, 1)
+    setMonthString(format(previous, 'yyyy-MM'))
+  }
+
+  const days = eachDayOfInterval({
+    start: startOfWeek(startOfMonth(month)),
+    end: endOfWeek(endOfMonth(month))
+  })
 
   return (
-    <MotionConfig transition={{ duration: transition.duration }}>
-      <div className="flex min-h-screen flex-col items-start bg-zinc-900 pt-28">
-        <div className="mx-auto w-full max-w-md">
-          <div className="overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-800">
-            <div className="px-8 pt-8">
-              <p className="text-lg text-white">Reset password</p>
-            </div>
-            <motion.div
-              // @ts-ignore
-              animate={{ height: bounds.height > 0 ? bounds.height : null }}
-              transition={{ type: 'spring', bounce: 0.2, duration: 0.8 }}
-            >
-              <div ref={ref}>
-                <AnimatePresence mode="popLayout">
-                  {status === 'idle' || status === 'saving' ? (
-                    <motion.div
-                      exit={{ opacity: 0 }}
-                      transition={{ ...transition, duration: transition.duration / 2 }}
-                      key="form"
+    <MotionConfig transition={{ duration: 1 }}>
+      <div className="flex min-h-screen items-start bg-stone-800 pt-16 text-stone-900">
+        <div className="relative mx-auto w-full max-w-md overflow-hidden rounded-2xl bg-white">
+          <div className="py-8">
+            <div className="flex flex-col justify-center rounded text-center">
+              <AnimatePresence
+                mode="popLayout"
+                initial={false}
+              >
+                <motion.div
+                  key={monthString}
+                  initial="enter"
+                  animate="middle"
+                  exit="exit"
+                >
+                  <header className="relative flex justify-between px-8">
+                    <button
+                      className="z-10 rounded-full p-1.5 hover:bg-stone-100"
+                      onClick={previousMonth}
                     >
-                      <Form
-                        onSubmit={async () => await delay(1000)}
-                        afterSave={() => setStatus('success')}
-                        className="p-8"
-                      >
-                        <p className="text-sm text-zinc-400">Enter your email to get a password reset link:</p>
-                        <div className="mt-3">
-                          <input
-                            className="block w-full rounded border-none text-slate-900"
-                            type="email"
-                            required
-                            defaultValue="sam@buildui.com"
-                          />
-                        </div>
-                        <div className="mt-8 text-right">
-                          <Form.Button className="rounded bg-indigo-500 px-5 py-2 text-sm font-medium text-white ">
-                            Email me my link
-                          </Form.Button>
-                        </div>
-                      </Form>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ ...transition, duration: transition.duration / 2, delay: transition.duration / 2 }}
+                      <ChevronLeftIcon className="h-4 w-4" />
+                    </button>
+                    <motion.p
+                      variants={{
+                        enter: { x: '100%' },
+                        middle: { x: '0%' },
+                        exit: { x: '-100%' }
+                      }}
+                      className="absolute inset-0 flex items-center justify-center font-semibold"
                     >
-                      <p className="p-8 text-sm text-zinc-400">Email sent! Check your inbox to continue.</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.div>
-          </div>
+                      {format(month, 'MMMM yyyy')}
+                    </motion.p>
+                    <button
+                      className="z-10 rounded-full p-1.5 hover:bg-stone-100"
+                      onClick={nextMonth}
+                    >
+                      <ChevronRightIcon className="h-4 w-4" />
+                    </button>
+                  </header>
+                  <div className="mt-6 grid grid-cols-7 gap-y-6 px-8">
+                    <span className="font-medium text-stone-500">Su</span>
+                    <span className="font-medium text-stone-500">Mo</span>
+                    <span className="font-medium text-stone-500">Tu</span>
+                    <span className="font-medium text-stone-500">We</span>
+                    <span className="font-medium text-stone-500">Th</span>
+                    <span className="font-medium text-stone-500">Fr</span>
+                    <span className="font-medium text-stone-500">Sa</span>
 
-          <p className="mt-8 text-sm text-zinc-500">
-            <span className="underline">Reach out</span> to us if you need more help.
-          </p>
+                    {days.map((day) => (
+                      <span
+                        key={format(day, 'yyyy-MM-dd')}
+                        className={`${isSameMonth(day, month) ? '' : 'text-stone-300'} font-semibold`}
+                      >
+                        {format(day, 'd')}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </div>
     </MotionConfig>
